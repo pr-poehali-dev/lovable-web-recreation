@@ -61,7 +61,10 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
-				}
+				},
+				profit: '#22C55E',
+				loss: '#EF4444',
+				neutral: '#6B7280'
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
