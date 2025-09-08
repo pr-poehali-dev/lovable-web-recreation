@@ -10,6 +10,7 @@ import { useTradingPlans } from "@/hooks/useTradingPlans";
 import { CreatePlanDialog } from "@/components/CreatePlanDialog";
 import { ExecutePlanDialog } from "@/components/ExecutePlanDialog";
 import { OutcomeAnalysisWidget } from "@/components/OutcomeAnalysisWidget";
+import { TradeDetailsDialog } from "@/components/TradeDetailsDialog";
 import Icon from "@/components/ui/icon";
 
 function TradingJournalContent() {
@@ -20,13 +21,18 @@ function TradingJournalContent() {
     plans,
     recentPairs, 
     createPlan, 
-    executePlan, 
+    executePlan,
+    deleteTrade,
+    deleteAllTrades,
+    restorePlanFromTrade,
     constants 
   } = useTradingPlans();
 
   const [createPlanOpen, setCreatePlanOpen] = useState(false);
   const [executePlanOpen, setExecutePlanOpen] = useState(false);
+  const [tradeDetailsOpen, setTradeDetailsOpen] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState(null);
+  const [selectedTrade, setSelectedTrade] = useState(null);
   const [planFilters, setPlanFilters] = useState({
     search: '',
     status: 'all',
@@ -196,6 +202,87 @@ function TradingJournalContent() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold text-loss">{maxLoss.toFixed(2)}R</div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Charts Section */}
+            <div className="grid lg:grid-cols-2 gap-6">
+              {/* Capital Curve Chart */}
+              <Card className="bg-card/60 backdrop-blur border-border/50">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle>Кривая капитала</CardTitle>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        График баланса со скользящим ожиданием
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button size="sm" variant="outline" className="bg-profit text-white">%</Button>
+                      <Button size="sm" variant="outline">R</Button>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4 text-sm">
+                    <span>Текущее ожидание: <strong className="text-profit">{avgR.toFixed(2)}R</strong></span>
+                    <Badge variant="secondary" className={avgR >= 0 ? "bg-profit/10 text-profit" : "bg-loss/10 text-loss"}>
+                      {avgR >= 0 ? 'Улучшается' : 'Ухудшается'}
+                    </Badge>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-64 bg-muted/20 rounded-lg flex items-center justify-center">
+                    <div className="text-center text-muted-foreground">
+                      <Icon name="TrendingUp" className="h-12 w-12 mx-auto mb-2" />
+                      <p>График кривой капитала</p>
+                      <p className="text-xs">Интерактивная визуализация роста капитала</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Performance Distribution */}
+              <Card className="bg-card/60 backdrop-blur border-border/50">
+                <CardHeader>
+                  <div className="flex justify-between">
+                    <div>
+                      <span className="text-sm text-muted-foreground">Total Trades</span>
+                      <div className="text-2xl font-bold">{totalTrades}</div>
+                    </div>
+                    <div>
+                      <span className="text-sm text-muted-foreground">Total PnL</span>
+                      <div className={`text-2xl font-bold ${totalR >= 0 ? 'text-profit' : 'text-loss'}`}>
+                        {totalR > 0 ? '+' : ''}{totalR.toFixed(2)}R
+                      </div>
+                    </div>
+                    <div>
+                      <span className="text-sm text-muted-foreground">Median R</span>
+                      <div className={`text-2xl font-bold ${avgR >= 0 ? 'text-profit' : 'text-loss'}`}>
+                        {avgR > 0 ? '+' : ''}{avgR.toFixed(2)}R
+                      </div>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 rounded-full bg-profit"></div>
+                        <span className="text-sm">Wins</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 rounded-full bg-loss"></div>
+                        <span className="text-sm">Losses</span>
+                      </div>
+                    </div>
+                    <div className="h-48 bg-muted/20 rounded-lg flex items-center justify-center">
+                      <div className="text-center text-muted-foreground">
+                        <Icon name="BarChart3" className="h-12 w-12 mx-auto mb-2" />
+                        <p>Гистограмма производительности</p>
+                        <p className="text-xs">Распределение результатов по диапазонам R</p>
+                      </div>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
             </div>
@@ -395,42 +482,124 @@ function TradingJournalContent() {
                   <p>Исполните первый торговый план для отображения сделок</p>
                 </div>
               ) : (
-                <div className="space-y-2">
-                  {executedTrades.map(trade => (
-                    <Card key={trade.id} className="bg-card/60 backdrop-blur border-border/50">
-                      <CardContent className="p-4">
-                        <div className="flex items-center justify-between">
-                          <div className="space-y-2">
-                            <div className="flex items-center gap-2">
-                              <span className="font-semibold">{trade.currencyPair}</span>
-                              <Icon name={trade.direction === 'Long' ? 'TrendingUp' : 'TrendingDown'} 
-                                    className={`h-4 w-4 ${trade.direction === 'Long' ? 'text-profit' : 'text-loss'}`} />
-                              <span>{trade.direction}</span>
-                              <Badge className={`${trade.actualR >= 0 ? 'bg-profit' : 'bg-loss'} text-white`}>
-                                {trade.actualR > 0 ? '+' : ''}{trade.actualR}R
-                              </Badge>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <h3 className="text-lg font-semibold">Filters</h3>
+                      <Input placeholder="Search trades..." className="w-64" />
+                      <Select>
+                        <SelectTrigger className="w-32">
+                          <SelectValue placeholder="All Setups" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Setups</SelectItem>
+                          {constants.SETUPS.map(setup => (
+                            <SelectItem key={setup} value={setup}>{setup}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Select>
+                        <SelectTrigger className="w-32">
+                          <SelectValue placeholder="All Sessions" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Sessions</SelectItem>
+                          {constants.SESSIONS.map(session => (
+                            <SelectItem key={session} value={session}>{session}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Select>
+                        <SelectTrigger className="w-32">
+                          <SelectValue placeholder="All Results" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Results</SelectItem>
+                          <SelectItem value="wins">Wins Only</SelectItem>
+                          <SelectItem value="losses">Losses Only</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-muted-foreground">{executedTrades.length} of {executedTrades.length} trades</span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={deleteAllTrades}
+                        className="text-loss hover:bg-loss/10"
+                      >
+                        <Icon name="Trash2" className="h-4 w-4 mr-2" />
+                        Delete All
+                      </Button>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <h3 className="text-lg font-semibold">All Trades ({executedTrades.length})</h3>
+                    {executedTrades.map(trade => (
+                      <Card key={trade.id} className="bg-card/60 backdrop-blur border-border/50">
+                        <CardContent className="p-4">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-4">
+                              <Icon name={trade.actualR >= 0 ? 'TrendingUp' : 'TrendingDown'} 
+                                    className={`h-6 w-6 ${trade.actualR >= 0 ? 'text-profit' : 'text-loss'}`} />
+                              <div>
+                                <div className="flex items-center gap-2">
+                                  <span className="font-semibold text-lg">{trade.currencyPair}</span>
+                                  <span className="text-sm text-muted-foreground">{trade.date}</span>
+                                  <span className="text-xs text-muted-foreground">
+                                    Auto-executed: {trade.executionType.replace('-', '_')}
+                                  </span>
+                                </div>
+                              </div>
                             </div>
-                            <div className="text-sm text-muted-foreground">
-                              {trade.setup} • {trade.session} • {trade.executionType} • {new Date(trade.executedAt).toLocaleDateString('ru-RU')}
-                            </div>
-                            {trade.psychologyTags.length > 0 && (
-                              <div className="flex gap-1 flex-wrap">
+                            <div className="flex items-center gap-4">
+                              <div className="flex items-center gap-2">
+                                <Badge variant="outline" className="text-xs">{trade.setup}</Badge>
+                                <Badge variant="outline" className="text-xs">{trade.session}</Badge>
                                 {trade.psychologyTags.map(tag => (
-                                  <Badge key={tag} variant="outline" className="text-xs">
+                                  <Badge key={tag} variant="outline" className="text-xs bg-orange-100 text-orange-800">
                                     {tag}
                                   </Badge>
                                 ))}
                               </div>
-                            )}
+                              <Badge className={`${trade.actualR >= 0 ? 'bg-profit' : 'bg-loss'} text-white`}>
+                                {trade.actualR > 0 ? '+' : ''}{trade.actualR}R
+                              </Badge>
+                              <div className="flex items-center gap-1">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => {
+                                    setSelectedTrade(trade);
+                                    setTradeDetailsOpen(true);
+                                  }}
+                                >
+                                  <Icon name="Eye" className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => restorePlanFromTrade(trade)}
+                                  className="text-profit hover:bg-profit/10"
+                                >
+                                  <Icon name="RotateCcw" className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => deleteTrade(trade.id)}
+                                  className="text-loss hover:bg-loss/10"
+                                >
+                                  <Icon name="Trash2" className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </div>
                           </div>
-                          <div className="text-right">
-                            <div className="text-sm text-muted-foreground">Entry: {trade.entryPrice}</div>
-                            <div className="text-sm text-muted-foreground">Exit: {trade.actualExitPrice}</div>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
@@ -468,6 +637,12 @@ function TradingJournalContent() {
         plan={selectedPlan}
         onExecutePlan={executePlan}
         psychologyTags={constants.PSYCHOLOGY_TAGS}
+      />
+
+      <TradeDetailsDialog
+        open={tradeDetailsOpen}
+        onOpenChange={setTradeDetailsOpen}
+        trade={selectedTrade}
       />
     </div>
   );

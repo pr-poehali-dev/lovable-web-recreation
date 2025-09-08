@@ -101,10 +101,29 @@ export function useTradingPlans() {
     };
 
     setExecutedTrades(prev => [executedTrade, ...prev]);
-    setPlans(prev => prev.filter(p => p.id !== planId));
+    // Change plan status to executed instead of removing it
+    setPlans(prev => prev.map(p => 
+      p.id === planId ? { ...p, status: 'executed' as const } : p
+    ));
     
     return executedTrade;
   }, [plans]);
+
+  const deleteTrade = useCallback((tradeId: string) => {
+    setExecutedTrades(prev => prev.filter(t => t.id !== tradeId));
+  }, []);
+
+  const deleteAllTrades = useCallback(() => {
+    setExecutedTrades([]);
+  }, []);
+
+  const restorePlanFromTrade = useCallback((trade: ExecutedTrade) => {
+    // Remove trade and restore plan as active
+    setExecutedTrades(prev => prev.filter(t => t.id !== trade.id));
+    setPlans(prev => prev.map(p => 
+      p.id === trade.id ? { ...p, status: 'active' as const } : p
+    ));
+  }, []);
 
   const activePlans = plans.filter(p => p.status === 'active');
 
@@ -115,6 +134,9 @@ export function useTradingPlans() {
     recentPairs,
     createPlan,
     executePlan,
+    deleteTrade,
+    deleteAllTrades,
+    restorePlanFromTrade,
     addRecentPair,
     constants: {
       CURRENCY_PAIRS,
