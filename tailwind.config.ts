@@ -62,9 +62,9 @@ export default {
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
 				},
-				profit: '#22C55E',
-				loss: '#EF4444',
-				neutral: '#6B7280'
+				profit: 'hsl(var(--profit))',
+				loss: 'hsl(var(--loss))',
+				neutral: 'hsl(var(--neutral))'
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
