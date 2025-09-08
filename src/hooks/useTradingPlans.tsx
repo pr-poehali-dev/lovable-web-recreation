@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useLocalStorage } from './useLocalStorage';
+import { PSYCHOLOGY_TAG_DEFINITIONS } from '@/types/psychology';
 
 export interface TradingPlan {
   id: string;
@@ -45,15 +46,7 @@ const DEFAULT_SETUPS = [
 const DEFAULT_SESSIONS = ['NY', 'London', 'Asia', 'Sydney'];
 const DEFAULT_STRATEGIES = ['Intraday', 'Swing', 'Scalping'];
 
-const PSYCHOLOGY_TAGS = [
-  'Rule Break: Entry',
-  'Rule Break: Size', 
-  'Revenge Trade',
-  'Missed Trade',
-  'Early Exit',
-  'Hoped Hope',
-  'Averaging Down'
-];
+
 
 export function useTradingPlans() {
   const [plans, setPlans] = useLocalStorage<TradingPlan[]>('trading-plans', []);
@@ -159,7 +152,7 @@ export function useTradingPlans() {
       SETUPS: allSetups,
       SESSIONS: allSessions,
       STRATEGIES: allStrategies,
-      PSYCHOLOGY_TAGS
+      PSYCHOLOGY_TAGS: PSYCHOLOGY_TAG_DEFINITIONS
     }
   };
 }

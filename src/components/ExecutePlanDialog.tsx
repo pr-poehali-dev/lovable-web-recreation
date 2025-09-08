@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { MultiSelect } from '@/components/ui/multi-select';
 import Icon from '@/components/ui/icon';
 import { TradingPlan, ExecutedTrade } from '@/hooks/useTradingPlans';
+import { PsychologyTag } from '@/types/psychology';
 
 interface ExecutePlanDialogProps {
   open: boolean;
@@ -23,7 +24,7 @@ interface ExecutePlanDialogProps {
       executionNotes: string;
     }
   ) => void;
-  psychologyTags: string[];
+  psychologyTags: PsychologyTag[];
 }
 
 export function ExecutePlanDialog({
@@ -174,15 +175,61 @@ export function ExecutePlanDialog({
           </div>
 
           {/* Psychology Tags */}
-          <div className="space-y-2">
+          <div className="space-y-3">
             <Label className="text-loss">Psychology Tags (Required) *</Label>
-            <MultiSelect
-              options={psychologyTags.map(tag => ({ label: tag, value: tag }))}
-              selected={selectedPsychologyTags}
-              onChange={setSelectedPsychologyTags}
-              placeholder="Select tags"
-              className="bg-muted/20"
-            />
+            <div className="space-y-2 max-h-48 overflow-y-auto">
+              {psychologyTags.map((tag) => {
+                const isSelected = selectedPsychologyTags.includes(typeof tag === 'string' ? tag : tag.name);
+                const tagName = typeof tag === 'string' ? tag : tag.name;
+                const tagData = typeof tag === 'string' ? null : tag;
+                
+                return (
+                  <button
+                    key={tagName}
+                    type="button"
+                    onClick={() => {
+                      if (isSelected) {
+                        setSelectedPsychologyTags(prev => prev.filter(t => t !== tagName));
+                      } else {
+                        setSelectedPsychologyTags(prev => [...prev, tagName]);
+                      }
+                    }}
+                    className={`
+                      w-full text-left p-3 rounded-lg border-2 transition-all
+                      ${isSelected 
+                        ? tagData?.category === 'good' 
+                          ? 'border-green-500 bg-green-50 dark:bg-green-900/20' 
+                          : tagData?.category === 'bad'
+                          ? 'border-red-500 bg-red-50 dark:bg-red-900/20'
+                          : 'border-orange-500 bg-orange-50 dark:bg-orange-900/20'
+                        : 'border-border bg-muted/10 hover:bg-muted/20'
+                      }
+                    `}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div 
+                        className={`w-3 h-3 rounded-full ${
+                          tagData?.color === 'green' ? 'bg-green-500' :
+                          tagData?.color === 'red' ? 'bg-red-500' :
+                          tagData?.color === 'orange' ? 'bg-orange-500' : 'bg-gray-500'
+                        }`} 
+                      />
+                      <div className="flex-1">
+                        <div className="font-medium">{tagName}</div>
+                        {tagData?.description && (
+                          <div className="text-xs text-muted-foreground mt-1">
+                            {tagData.description}
+                          </div>
+                        )}
+                      </div>
+                      {isSelected && (
+                        <Icon name="Check" className="h-4 w-4 text-green-600" />
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
             {selectedPsychologyTags.length === 0 && (
               <p className="text-xs text-loss">You must select at least one psychology tag to execute the plan</p>
             )}
