@@ -160,15 +160,15 @@ export function RDistributionWidget({ executedTrades }: RDistributionWidgetProps
           </div>
 
           {/* Chart */}
-          <div className="h-48 relative">
-            <div className="absolute inset-0 flex items-end justify-between gap-1">
+          <div className="h-80 relative">
+            <div className="absolute inset-0 flex items-end justify-between gap-2">
               {distributionData.map((bucket, index) => {
                 const height = (bucket.totalTrades / maxTrades) * 100;
                 const winHeight = (bucket.wins / maxTrades) * 100;
                 const lossHeight = (bucket.losses / maxTrades) * 100;
                 
                 return (
-                  <div key={bucket.range} className="flex-1 flex flex-col items-center group relative">
+                  <div key={bucket.range} className="flex-1 flex flex-col items-center group relative min-w-[60px]">
                     {/* Bar */}
                     <div className="w-full flex flex-col" style={{ height: `${height}%` }}>
                       {/* Wins (green) */}
@@ -194,7 +194,7 @@ export function RDistributionWidget({ executedTrades }: RDistributionWidgetProps
                     </div>
                     
                     {/* Count label */}
-                    <div className="text-xs font-medium mt-1">
+                    <div className="text-sm font-bold mt-2 text-white">
                       {bucket.totalTrades}
                     </div>
                     
@@ -218,14 +218,16 @@ export function RDistributionWidget({ executedTrades }: RDistributionWidgetProps
           </div>
 
           {/* X-axis labels */}
-          <div className="flex justify-between text-xs text-muted-foreground">
+          <div className="flex justify-between text-xs text-muted-foreground mt-4">
             {distributionData.map(bucket => (
-              <div key={bucket.range} className="flex-1 text-center">
-                {bucket.range}
+              <div key={bucket.range} className="flex-1 text-center min-w-[60px]">
+                <div className="transform -rotate-45 text-xs">
+                  {bucket.range}
+                </div>
               </div>
             ))}
           </div>
-          <div className="text-center text-xs text-muted-foreground">
+          <div className="text-center text-sm font-semibold text-muted-foreground mt-2">
             R Multiple Ranges
           </div>
 

@@ -222,13 +222,13 @@ export function PnLDistributionWidget({ executedTrades }: PnLDistributionWidgetP
               </div>
             </div>
             
-            <div className="h-40 relative border-b border-l border-border">
+            <div className="h-64 relative border-b border-l border-border">
               <div className="absolute inset-0 flex items-end">
                 {distributionData.map((bucket, index) => {
                   const height = maxCount > 0 ? (bucket.count / maxCount) * 100 : 0;
                   
                   return (
-                    <div key={index} className="flex-1 mx-1 flex flex-col items-center">
+                    <div key={index} className="flex-1 mx-2 flex flex-col items-center min-w-[50px]">
                       <div
                         className={`w-full transition-all hover:opacity-80 ${
                           bucket.isProfit ? 'bg-profit' : 'bg-loss'
@@ -236,7 +236,7 @@ export function PnLDistributionWidget({ executedTrades }: PnLDistributionWidgetP
                         style={{ height: `${height}%`, minHeight: bucket.count > 0 ? '8px' : '0' }}
                         title={`${bucket.range}: ${bucket.count} trades, ${bucket.totalR.toFixed(2)}R total`}
                       />
-                      <div className="text-xs font-medium mt-1">
+                      <div className="text-sm font-bold mt-2 text-white">
                         {bucket.count}
                       </div>
                     </div>
@@ -251,10 +251,12 @@ export function PnLDistributionWidget({ executedTrades }: PnLDistributionWidgetP
             </div>
             
             {/* X-axis labels */}
-            <div className="flex mt-2">
+            <div className="flex mt-4 justify-between">
               {distributionData.map((bucket, index) => (
-                <div key={index} className="flex-1 text-xs text-center text-muted-foreground">
-                  {bucket.range}
+                <div key={index} className="flex-1 text-xs text-center text-muted-foreground min-w-[50px]">
+                  <div className="transform -rotate-45">
+                    {bucket.range}
+                  </div>
                 </div>
               ))}
             </div>

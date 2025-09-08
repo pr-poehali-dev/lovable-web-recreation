@@ -90,7 +90,7 @@ export function DashboardContent({
       </div>
 
       {/* Main Metrics Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
         <Card className="bg-card/60 backdrop-blur border-border/50">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Всего сделок</CardTitle>
@@ -153,7 +153,7 @@ export function DashboardContent({
       </div>
 
       {/* Charts Section */}
-      <div className="grid lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Equity Curve Chart */}
         <EquityCurveWidget executedTrades={filteredTrades} />
 
