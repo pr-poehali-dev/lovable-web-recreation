@@ -1,4 +1,5 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
+import { useLocalStorage } from './useLocalStorage';
 
 export interface TradingPlan {
   id: string;
@@ -27,16 +28,22 @@ export interface ExecutedTrade extends TradingPlan {
   executedAt: number;
 }
 
-const CURRENCY_PAIRS = [
+export interface UserSettings {
+  customSetups: string[];
+  customSessions: string[];
+  customStrategies: string[];
+}
+
+const DEFAULT_CURRENCY_PAIRS = [
   'BTCUSDT', 'ETHUSDT', 'EURUSD', 'GBPUSD', 'USDJPY', 'AUDUSD', 'USDCAD', 'NZDUSD'
 ];
 
-const SETUPS = [
+const DEFAULT_SETUPS = [
   'Liquidity Grab', 'BOS', 'SMC', 'FVG', 'ICT Kill Zone', 'Price Action', 'OB'
 ];
 
-const SESSIONS = ['NY', 'London', 'Asia', 'Sydney'];
-const STRATEGIES = ['Intraday', 'Swing', 'Scalping'];
+const DEFAULT_SESSIONS = ['NY', 'London', 'Asia', 'Sydney'];
+const DEFAULT_STRATEGIES = ['Intraday', 'Swing', 'Scalping'];
 
 const PSYCHOLOGY_TAGS = [
   'Rule Break: Entry',
@@ -49,20 +56,21 @@ const PSYCHOLOGY_TAGS = [
 ];
 
 export function useTradingPlans() {
-  const [plans, setPlans] = useState<TradingPlan[]>([]);
-  const [executedTrades, setExecutedTrades] = useState<ExecutedTrade[]>([]);
-  const [recentPairs, setRecentPairs] = useState<string[]>(() => {
-    const saved = localStorage.getItem('recent-currency-pairs');
-    return saved ? JSON.parse(saved) : ['BTCUSDT'];
+  const [plans, setPlans] = useLocalStorage<TradingPlan[]>('trading-plans', []);
+  const [executedTrades, setExecutedTrades] = useLocalStorage<ExecutedTrade[]>('executed-trades', []);
+  const [recentPairs, setRecentPairs] = useLocalStorage<string[]>('recent-currency-pairs', ['BTCUSDT']);
+  const [userSettings, setUserSettings] = useLocalStorage<UserSettings>('user-settings', {
+    customSetups: [],
+    customSessions: [],
+    customStrategies: []
   });
 
   const addRecentPair = useCallback((pair: string) => {
     setRecentPairs(prev => {
       const updated = [pair, ...prev.filter(p => p !== pair)].slice(0, 5);
-      localStorage.setItem('recent-currency-pairs', JSON.stringify(updated));
       return updated;
     });
-  }, []);
+  }, [setRecentPairs]);
 
   const createPlan = useCallback((planData: Omit<TradingPlan, 'id' | 'status' | 'createdAt'>) => {
     const newPlan: TradingPlan = {
@@ -75,7 +83,7 @@ export function useTradingPlans() {
     setPlans(prev => [newPlan, ...prev]);
     addRecentPair(planData.currencyPair);
     return newPlan;
-  }, [addRecentPair]);
+  }, [addRecentPair, setPlans]);
 
   const executePlan = useCallback((
     planId: string, 
@@ -101,48 +109,56 @@ export function useTradingPlans() {
     };
 
     setExecutedTrades(prev => [executedTrade, ...prev]);
-    // Change plan status to executed instead of removing it
     setPlans(prev => prev.map(p => 
       p.id === planId ? { ...p, status: 'executed' as const } : p
     ));
     
     return executedTrade;
-  }, [plans]);
+  }, [plans, setExecutedTrades, setPlans]);
 
   const deleteTrade = useCallback((tradeId: string) => {
     setExecutedTrades(prev => prev.filter(t => t.id !== tradeId));
-  }, []);
+  }, [setExecutedTrades]);
 
   const deleteAllTrades = useCallback(() => {
     setExecutedTrades([]);
-  }, []);
+  }, [setExecutedTrades]);
 
   const restorePlanFromTrade = useCallback((trade: ExecutedTrade) => {
-    // Remove trade and restore plan as active
     setExecutedTrades(prev => prev.filter(t => t.id !== trade.id));
     setPlans(prev => prev.map(p => 
       p.id === trade.id ? { ...p, status: 'active' as const } : p
     ));
-  }, []);
+  }, [setExecutedTrades, setPlans]);
+
+  const updateUserSettings = useCallback((newSettings: Partial<UserSettings>) => {
+    setUserSettings(prev => ({ ...prev, ...newSettings }));
+  }, [setUserSettings]);
 
   const activePlans = plans.filter(p => p.status === 'active');
+
+  const allSetups = [...DEFAULT_SETUPS, ...userSettings.customSetups];
+  const allSessions = [...DEFAULT_SESSIONS, ...userSettings.customSessions];
+  const allStrategies = [...DEFAULT_STRATEGIES, ...userSettings.customStrategies];
 
   return {
     plans,
     executedTrades,
     activePlans,
     recentPairs,
+    userSettings,
     createPlan,
     executePlan,
     deleteTrade,
     deleteAllTrades,
     restorePlanFromTrade,
     addRecentPair,
+    updateUserSettings,
     constants: {
-      CURRENCY_PAIRS,
-      SETUPS,
-      SESSIONS,
-      STRATEGIES,
+      CURRENCY_PAIRS: DEFAULT_CURRENCY_PAIRS,
+      SETUPS: allSetups,
+      SESSIONS: allSessions,
+      STRATEGIES: allStrategies,
       PSYCHOLOGY_TAGS
     }
   };

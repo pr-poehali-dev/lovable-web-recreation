@@ -10,6 +10,7 @@ import { DashboardContent } from "@/components/DashboardContent";
 import { AllPlansTab } from "@/components/AllPlansTab";
 import { ActivePlansTab } from "@/components/ActivePlansTab";
 import { TradesTab } from "@/components/TradesTab";
+import { SettingsTab } from "@/components/SettingsTab";
 import { EmptyTab } from "@/components/EmptyTabs";
 import Icon from "@/components/ui/icon";
 
@@ -19,11 +20,13 @@ function TradingJournalContent() {
     executedTrades, 
     plans,
     recentPairs, 
+    userSettings,
     createPlan, 
     executePlan,
     deleteTrade,
     deleteAllTrades,
     restorePlanFromTrade,
+    updateUserSettings,
     constants 
   } = useTradingPlans();
 
@@ -84,11 +87,11 @@ function TradingJournalContent() {
             </TabsTrigger>
             <TabsTrigger value="active" className="flex items-center gap-2">
               <Icon name="Play" className="h-4 w-4" />
-              Активные
+              Активные ({activePlans.length})
             </TabsTrigger>
             <TabsTrigger value="trades" className="flex items-center gap-2">
               <Icon name="List" className="h-4 w-4" />
-              Все сделки
+              Все сделки ({executedTrades.length})
             </TabsTrigger>
             <TabsTrigger value="settings" className="flex items-center gap-2">
               <Icon name="Settings" className="h-4 w-4" />
@@ -110,6 +113,7 @@ function TradingJournalContent() {
               maxWin={maxWin}
               maxLoss={maxLoss}
               activePlans={activePlans}
+              executedTrades={executedTrades}
             />
           </TabsContent>
 
@@ -142,10 +146,9 @@ function TradingJournalContent() {
           </TabsContent>
 
           <TabsContent value="settings">
-            <EmptyTab
-              icon="Settings"
-              title="Настройки"
-              description="Здесь можно настроить параметры журнала"
+            <SettingsTab
+              userSettings={userSettings}
+              updateUserSettings={updateUserSettings}
             />
           </TabsContent>
 

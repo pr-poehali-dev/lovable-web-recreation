@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { OutcomeAnalysisWidget } from '@/components/OutcomeAnalysisWidget';
-import { TradingPlan } from '@/hooks/useTradingPlans';
+import { TradingPlan, ExecutedTrade } from '@/hooks/useTradingPlans';
 import Icon from '@/components/ui/icon';
 
 interface DashboardContentProps {
@@ -15,6 +15,7 @@ interface DashboardContentProps {
   maxWin: number;
   maxLoss: number;
   activePlans: TradingPlan[];
+  executedTrades: ExecutedTrade[];
 }
 
 export function DashboardContent({
@@ -25,8 +26,50 @@ export function DashboardContent({
   avgR,
   maxWin,
   maxLoss,
-  activePlans
+  activePlans,
+  executedTrades
 }: DashboardContentProps) {
+  
+  // Calculate heatmap data
+  const setupPerformance = React.useMemo(() => {
+    const setupStats: Record<string, { wins: number; total: number; totalR: number }> = {};
+    
+    executedTrades.forEach(trade => {
+      if (!setupStats[trade.setup]) {
+        setupStats[trade.setup] = { wins: 0, total: 0, totalR: 0 };
+      }
+      setupStats[trade.setup].total++;
+      setupStats[trade.setup].totalR += trade.actualR;
+      if (trade.actualR > 0) setupStats[trade.setup].wins++;
+    });
+    
+    return Object.entries(setupStats).map(([setup, stats]) => ({
+      setup,
+      winrate: stats.total > 0 ? (stats.wins / stats.total) * 100 : 0,
+      avgR: stats.total > 0 ? stats.totalR / stats.total : 0,
+      total: stats.total
+    }));
+  }, [executedTrades]);
+
+  const sessionPerformance = React.useMemo(() => {
+    const sessionStats: Record<string, { wins: number; total: number; totalR: number }> = {};
+    
+    executedTrades.forEach(trade => {
+      if (!sessionStats[trade.session]) {
+        sessionStats[trade.session] = { wins: 0, total: 0, totalR: 0 };
+      }
+      sessionStats[trade.session].total++;
+      sessionStats[trade.session].totalR += trade.actualR;
+      if (trade.actualR > 0) sessionStats[trade.session].wins++;
+    });
+    
+    return Object.entries(sessionStats).map(([session, stats]) => ({
+      session,
+      winrate: stats.total > 0 ? (stats.wins / stats.total) * 100 : 0,
+      avgR: stats.total > 0 ? stats.totalR / stats.total : 0,
+      total: stats.total
+    }));
+  }, [executedTrades]);
   return (
     <div className="space-y-6 mt-6">
       {/* Analysis Header */}
@@ -186,6 +229,89 @@ export function DashboardContent({
           </CardContent>
         </Card>
       </div>
+
+      {/* Heatmap widgets */}
+      {totalTrades > 0 && (
+        <div className="grid lg:grid-cols-2 gap-6">
+          {/* Setup Performance Heatmap */}
+          <Card className="bg-card/60 backdrop-blur border-border/50">
+            <CardHeader>
+              <CardTitle>Производительность по сетапам</CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Анализ эффективности торговых сетапов
+              </p>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {setupPerformance.length > 0 ? setupPerformance.map(item => (
+                  <div key={item.setup} className="flex items-center justify-between p-3 rounded-lg border bg-card/30">
+                    <div className="flex items-center gap-3">
+                      <div 
+                        className={`w-3 h-3 rounded-full ${
+                          item.winrate >= 60 ? 'bg-profit' : 
+                          item.winrate >= 40 ? 'bg-yellow-500' : 'bg-loss'
+                        }`} 
+                      />
+                      <span className="font-medium">{item.setup}</span>
+                    </div>
+                    <div className="flex items-center gap-4 text-sm">
+                      <span>{item.winrate.toFixed(1)}%</span>
+                      <span className={item.avgR >= 0 ? 'text-profit' : 'text-loss'}>
+                        {item.avgR > 0 ? '+' : ''}{item.avgR.toFixed(2)}R
+                      </span>
+                      <Badge variant="secondary">{item.total}</Badge>
+                    </div>
+                  </div>
+                )) : (
+                  <div className="text-center text-muted-foreground py-8">
+                    <Icon name="Target" className="h-8 w-8 mx-auto mb-2" />
+                    <p>Нет данных по сетапам</p>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Session Performance Heatmap */}
+          <Card className="bg-card/60 backdrop-blur border-border/50">
+            <CardHeader>
+              <CardTitle>Производительность по сессиям</CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Анализ эффективности торговых сессий
+              </p>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {sessionPerformance.length > 0 ? sessionPerformance.map(item => (
+                  <div key={item.session} className="flex items-center justify-between p-3 rounded-lg border bg-card/30">
+                    <div className="flex items-center gap-3">
+                      <div 
+                        className={`w-3 h-3 rounded-full ${
+                          item.winrate >= 60 ? 'bg-profit' : 
+                          item.winrate >= 40 ? 'bg-yellow-500' : 'bg-loss'
+                        }`} 
+                      />
+                      <span className="font-medium">{item.session}</span>
+                    </div>
+                    <div className="flex items-center gap-4 text-sm">
+                      <span>{item.winrate.toFixed(1)}%</span>
+                      <span className={item.avgR >= 0 ? 'text-profit' : 'text-loss'}>
+                        {item.avgR > 0 ? '+' : ''}{item.avgR.toFixed(2)}R
+                      </span>
+                      <Badge variant="secondary">{item.total}</Badge>
+                    </div>
+                  </div>
+                )) : (
+                  <div className="text-center text-muted-foreground py-8">
+                    <Icon name="Clock" className="h-8 w-8 mx-auto mb-2" />
+                    <p>Нет данных по сессиям</p>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Outcome Analysis Widget */}
       <OutcomeAnalysisWidget 
