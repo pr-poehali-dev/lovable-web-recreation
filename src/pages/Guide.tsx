@@ -199,7 +199,7 @@ export default function Guide() {
             <div className="bg-slate-700 p-4 rounded-lg">
               <h4 className="text-orange-400 font-semibold mb-2">⚠️ Красные флаги:</h4>
               <ul className="text-gray-300 text-sm space-y-1">
-                <li>• Длительная просадка (>50 сделок)</li>
+                <li>• Длительная просадка (&gt;50 сделок)</li>
                 <li>• Резкие падения после роста</li>
                 <li>• Стагнация кривой</li>
                 <li>• Увеличивающаяся волатильность</li>
