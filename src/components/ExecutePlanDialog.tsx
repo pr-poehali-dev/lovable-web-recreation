@@ -276,11 +276,9 @@ export function ExecutePlanDialog({
             <Button 
               type="submit" 
               disabled={!isFormValid}
-              className={`flex-1 text-white ${
-                actualR !== null && actualR < 0 ? 'bg-loss hover:bg-loss/90' : 'bg-profit hover:bg-profit/90'
-              }`}
+              className="flex-1 text-white bg-profit hover:bg-profit/90 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Execute Plan
+              Выполнить
             </Button>
           </div>
         </form>

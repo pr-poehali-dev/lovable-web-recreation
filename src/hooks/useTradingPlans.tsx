@@ -124,6 +124,10 @@ export function useTradingPlans() {
     ));
   }, [setExecutedTrades, setPlans]);
 
+  const deletePlan = useCallback((planId: string) => {
+    setPlans(prev => prev.filter(p => p.id !== planId));
+  }, [setPlans]);
+
   const updateUserSettings = useCallback((newSettings: Partial<UserSettings>) => {
     setUserSettings(prev => ({ ...prev, ...newSettings }));
   }, [setUserSettings]);
@@ -145,6 +149,7 @@ export function useTradingPlans() {
     deleteTrade,
     deleteAllTrades,
     restorePlanFromTrade,
+    deletePlan,
     addRecentPair,
     updateUserSettings,
     constants: {

@@ -26,6 +26,7 @@ function TradingJournalContent() {
     deleteTrade,
     deleteAllTrades,
     restorePlanFromTrade,
+    deletePlan,
     updateUserSettings,
     constants 
   } = useTradingPlans();
@@ -124,6 +125,7 @@ function TradingJournalContent() {
               setPlanFilters={setPlanFilters}
               constants={constants}
               onExecutePlan={handleExecutePlan}
+              onDeletePlan={deletePlan}
             />
           </TabsContent>
 

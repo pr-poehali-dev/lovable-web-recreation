@@ -19,6 +19,7 @@ interface AllPlansTabProps {
     SETUPS: string[];
   };
   onExecutePlan: (plan: TradingPlan) => void;
+  onDeletePlan: (planId: string) => void;
 }
 
 export function AllPlansTab({
@@ -26,7 +27,8 @@ export function AllPlansTab({
   planFilters,
   setPlanFilters,
   constants,
-  onExecutePlan
+  onExecutePlan,
+  onDeletePlan
 }: AllPlansTabProps) {
   return (
     <div className="space-y-6">
@@ -107,6 +109,14 @@ export function AllPlansTab({
                           Execute
                         </Button>
                       )}
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => onDeletePlan(plan.id)}
+                        className="text-loss border-loss hover:bg-loss/10"
+                      >
+                        <Icon name="Trash2" className="h-4 w-4" />
+                      </Button>
                     </div>
                   </div>
                 </CardContent>

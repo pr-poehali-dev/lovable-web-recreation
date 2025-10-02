@@ -134,14 +134,14 @@ export function CapitalCurve({ executedTrades }: CapitalCurveProps) {
                 />
               )}
               
-              {/* Expectation line */}
+              {/* Expectation line (moving average) */}
               <path
                 d={getExpectationPathData()}
                 fill="none"
-                stroke="rgb(34, 197, 94)"
-                strokeWidth="0.5"
-                opacity="0.6"
-                strokeDasharray="2,2"
+                stroke="rgb(250, 204, 21)"
+                strokeWidth="0.6"
+                opacity="0.8"
+                strokeDasharray="3,3"
               />
               
               {/* Capital curve */}
