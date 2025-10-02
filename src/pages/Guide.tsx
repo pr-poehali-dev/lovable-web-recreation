@@ -540,7 +540,7 @@ export default function Guide() {
               <div className="text-gray-300 text-sm">Reward:Risk</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-yellow-400"><10R</div>
+              <div className="text-2xl font-bold text-yellow-400">&lt;10R</div>
               <div className="text-gray-300 text-sm">Max Drawdown</div>
             </div>
           </div>
