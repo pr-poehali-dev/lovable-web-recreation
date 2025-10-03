@@ -40,15 +40,12 @@ export function PnLDistributionWidget({ executedTrades }: PnLDistributionWidgetP
     const rValues = executedTrades.map(t => t.actualR);
     const sorted = [...rValues].sort((a, b) => a - b);
     
-    // Calculate statistics
     const mean = rValues.reduce((sum, r) => sum + r, 0) / rValues.length;
     const median = sorted[Math.floor(sorted.length / 2)];
     
-    // Standard deviation
     const variance = rValues.reduce((sum, r) => sum + Math.pow(r - mean, 2), 0) / rValues.length;
     const stdDev = Math.sqrt(variance);
     
-    // Percentiles
     const getPercentile = (arr: number[], p: number) => {
       const index = Math.ceil((p / 100) * arr.length) - 1;
       return arr[Math.max(0, Math.min(index, arr.length - 1))];
@@ -67,11 +64,10 @@ export function PnLDistributionWidget({ executedTrades }: PnLDistributionWidgetP
       }
     };
 
-    // Create buckets for histogram
     const minR = Math.min(...rValues);
     const maxR = Math.max(...rValues);
     const range = maxR - minR;
-    const bucketCount = 5; // Fixed 5 buckets as shown in the image
+    const bucketCount = 8;
     const bucketSize = range / bucketCount;
     
     const buckets: DistributionBucket[] = [];
@@ -82,19 +78,12 @@ export function PnLDistributionWidget({ executedTrades }: PnLDistributionWidgetP
       
       const tradesInBucket = rValues.filter(r => {
         if (i === bucketCount - 1) {
-          return r >= bucketMin && r <= bucketMax; // Include max in last bucket
+          return r >= bucketMin && r <= bucketMax;
         }
         return r >= bucketMin && r < bucketMax;
       });
       
-      let rangeLabel: string;
-      if (bucketMin < 0 && bucketMax <= 0) {
-        rangeLabel = `${bucketMin.toFixed(1)} to ${bucketMax.toFixed(1)}`;
-      } else if (bucketMin < 0 && bucketMax > 0) {
-        rangeLabel = `${bucketMin.toFixed(1)} to ${bucketMax.toFixed(1)}`;
-      } else {
-        rangeLabel = `${bucketMin.toFixed(1)} to ${bucketMax.toFixed(1)}`;
-      }
+      const rangeLabel = `${bucketMin.toFixed(1)} - ${bucketMax.toFixed(1)}`;
       
       buckets.push({
         range: rangeLabel,
@@ -106,7 +95,7 @@ export function PnLDistributionWidget({ executedTrades }: PnLDistributionWidgetP
       });
     }
     
-    return { distributionData: buckets, stats };
+    return { distributionData: buckets.filter(b => b.count > 0), stats };
   }, [executedTrades]);
 
   if (executedTrades.length === 0) {
@@ -115,7 +104,7 @@ export function PnLDistributionWidget({ executedTrades }: PnLDistributionWidgetP
         <CardHeader>
           <CardTitle>Распределение P&L</CardTitle>
           <p className="text-sm text-muted-foreground">
-            Анализ распределения результатов сделок по концепции Тендлера
+            Анализ распределения результатов сделок
           </p>
         </CardHeader>
         <CardContent>
@@ -123,7 +112,7 @@ export function PnLDistributionWidget({ executedTrades }: PnLDistributionWidgetP
             <div className="text-center text-muted-foreground">
               <div className="text-4xl mb-2">📈</div>
               <p>Распределение результатов</p>
-              <p className="text-xs">Добавьте сделки для анализа распределения</p>
+              <p className="text-xs">Добавьте сделки для анализа</p>
             </div>
           </div>
         </CardContent>
@@ -131,7 +120,7 @@ export function PnLDistributionWidget({ executedTrades }: PnLDistributionWidgetP
     );
   }
 
-  const maxCount = Math.max(...distributionData.map(d => d.count));
+  const maxCount = Math.max(...distributionData.map(d => d.count), 1);
   
   return (
     <Card className="bg-card/60 backdrop-blur border-border/50">
@@ -143,7 +132,6 @@ export function PnLDistributionWidget({ executedTrades }: PnLDistributionWidgetP
       </CardHeader>
       <CardContent>
         <div className="space-y-6">
-          {/* Statistics Overview */}
           {stats && (
             <div className="grid grid-cols-4 gap-4">
               <div className="text-center">
@@ -155,11 +143,11 @@ export function PnLDistributionWidget({ executedTrades }: PnLDistributionWidgetP
               <div className="text-center">
                 <div className="text-sm text-muted-foreground">Медиана</div>
                 <div className={`text-xl font-bold ${stats.median >= 0 ? 'text-profit' : 'text-loss'}`}>
-                  {stats.median > 0 ? '+' : ''}{stats.median.toFixed(0)}R
+                  {stats.median > 0 ? '+' : ''}{stats.median.toFixed(1)}R
                 </div>
               </div>
               <div className="text-center">
-                <div className="text-sm text-muted-foreground">Ст. отклонение</div>
+                <div className="text-sm text-muted-foreground">Ст. откл.</div>
                 <div className="text-xl font-bold">
                   {stats.stdDev.toFixed(2)}R
                 </div>
@@ -173,10 +161,9 @@ export function PnLDistributionWidget({ executedTrades }: PnLDistributionWidgetP
             </div>
           )}
 
-          {/* Percentiles */}
           {stats && (
             <div>
-              <h4 className="font-semibold mb-3">Процентили</h4>
+              <h4 className="font-semibold mb-3">Процентили (по Ван Тендлеру)</h4>
               <div className="grid grid-cols-4 gap-4">
                 <div className="text-center p-3 bg-muted/20 rounded-lg">
                   <div className="text-sm text-muted-foreground">5%</div>
@@ -206,72 +193,76 @@ export function PnLDistributionWidget({ executedTrades }: PnLDistributionWidgetP
             </div>
           )}
 
-          {/* Histogram */}
           <div>
-            <div className="flex items-center justify-between mb-4">
-              <h4 className="font-semibold">Гистограмма распределения</h4>
-              <div className="flex items-center gap-4 text-sm">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 bg-loss rounded"></div>
-                  <span>Убытки</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 bg-profit rounded"></div>
-                  <span>Прибыль</span>
-                </div>
-              </div>
-            </div>
+            <h4 className="font-semibold mb-4">Гистограмма распределения</h4>
             
-            <div className="h-64 relative border-b border-l border-border">
-              <div className="absolute inset-0 flex items-end">
-                {distributionData.map((bucket, index) => {
-                  const height = maxCount > 0 ? (bucket.count / maxCount) * 100 : 0;
-                  
-                  return (
-                    <div key={index} className="flex-1 mx-2 flex flex-col items-center min-w-[50px]">
-                      <div
-                        className={`w-full transition-all hover:opacity-80 ${
-                          bucket.isProfit ? 'bg-profit' : 'bg-loss'
-                        }`}
-                        style={{ height: `${height}%`, minHeight: bucket.count > 0 ? '8px' : '0' }}
-                        title={`${bucket.range}: ${bucket.count} trades, ${bucket.totalR.toFixed(2)}R total`}
-                      />
-                      <div className="text-sm font-bold mt-2 text-white">
-                        {bucket.count}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-              
-              {/* Y-axis label */}
-              <div className="absolute -left-8 top-1/2 transform -rotate-90 text-xs text-muted-foreground">
-                Частота
-              </div>
-            </div>
-            
-            {/* X-axis labels */}
-            <div className="flex mt-4 justify-between">
-              {distributionData.map((bucket, index) => (
-                <div key={index} className="flex-1 text-xs text-center text-muted-foreground min-w-[50px]">
-                  <div className="transform -rotate-45">
-                    {bucket.range}
+            <div className="h-80 relative flex flex-col">
+              <div className="flex-1 relative">
+                <div className="absolute left-0 top-0 bottom-0 flex flex-col justify-between text-xs text-muted-foreground pr-2 w-8">
+                  <div>{maxCount}</div>
+                  <div>{Math.floor(maxCount * 0.75)}</div>
+                  <div>{Math.floor(maxCount * 0.5)}</div>
+                  <div>{Math.floor(maxCount * 0.25)}</div>
+                  <div>0</div>
+                </div>
+
+                <div className="ml-10 h-full border-l border-b border-border/50">
+                  <div className="h-full flex items-end justify-around gap-1 px-2">
+                    {distributionData.map((bucket, index) => {
+                      const height = (bucket.count / maxCount) * 100;
+                      
+                      return (
+                        <div key={index} className="flex-1 flex flex-col items-center group relative max-w-[80px]">
+                          <div
+                            className={`w-full rounded-t transition-all ${
+                              bucket.isProfit ? 'bg-profit' : 'bg-loss'
+                            } hover:opacity-80`}
+                            style={{ height: `${height}%`, minHeight: bucket.count > 0 ? '4px' : '0' }}
+                          />
+                          
+                          <div className="text-xs font-semibold mt-1 text-foreground">
+                            {bucket.count}
+                          </div>
+
+                          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 hidden group-hover:block z-10">
+                            <div className="bg-popover text-popover-foreground p-3 rounded-lg shadow-lg border text-xs whitespace-nowrap">
+                              <div className="font-medium mb-1">{bucket.range}R</div>
+                              <div>Сделок: {bucket.count}</div>
+                              <div className={bucket.totalR >= 0 ? 'text-profit' : 'text-loss'}>
+                                Общий R: {bucket.totalR > 0 ? '+' : ''}{bucket.totalR.toFixed(2)}R
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
-              ))}
+              </div>
+
+              <div className="ml-10 flex justify-around gap-1 px-2 mt-2">
+                {distributionData.map((bucket, index) => (
+                  <div key={index} className="flex-1 text-center max-w-[80px]">
+                    <div className="text-xs text-muted-foreground">{bucket.range}</div>
+                  </div>
+                ))}
+              </div>
             </div>
-            <div className="text-center text-xs text-muted-foreground mt-2">
-              R Мультипликаторы
+
+            <div className="mt-4 text-center">
+              <div className="text-sm font-medium text-muted-foreground">R-мультипликатор</div>
+              <div className="text-xs text-muted-foreground mt-1">
+                По вертикальной оси (частота): количество сделок
+              </div>
             </div>
           </div>
 
-          {/* Key Insights */}
           <div className="space-y-2 text-sm">
             <h4 className="font-semibold">Ключевые выводы:</h4>
             <ul className="space-y-1 text-muted-foreground list-disc list-inside">
-              <li>Распределение показывает реальные ожидания от вашей торговой системы</li>
+              <li>Распределение показывает реальные ожидания от торговой системы</li>
               <li>Используйте процентили для управления психологическими ожиданиями</li>
-              <li>{stats && `50% ваших сделок будут в диапазоне ${stats.range.min.toFixed(1)}R - ${stats.range.max.toFixed(1)}R`}</li>
+              {stats && <li>50% сделок будут в диапазоне от {stats.percentiles.p25.toFixed(1)}R до {stats.percentiles.p75.toFixed(1)}R</li>}
             </ul>
           </div>
         </div>

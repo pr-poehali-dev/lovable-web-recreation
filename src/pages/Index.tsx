@@ -13,6 +13,7 @@ import { TradesTab } from "@/components/TradesTab";
 import { SettingsTab } from "@/components/SettingsTab";
 import { EmptyTab } from "@/components/EmptyTabs";
 import Icon from "@/components/ui/icon";
+import Guide from "@/pages/Guide";
 
 function TradingJournalContent() {
   const { 
@@ -154,14 +155,8 @@ function TradingJournalContent() {
             />
           </TabsContent>
 
-          <TabsContent value="guide">
-            <div className="flex items-center justify-center min-h-[400px]">
-              <div className="text-center space-y-4">
-                <Icon name="BookOpen" size={64} className="text-green-500 mx-auto" />
-                <h2 className="text-2xl font-bold text-white">Руководство пользователя</h2>
-                <p className="text-gray-400 max-w-md">
-                  Подробное руководство по использованию торгового журнала с примерами и лучшими практиками
-                </p>
+          <TabsContent value="guide" className="mt-0">
+            <Guide />
                 <a 
                   href="/guide" 
                   className="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-medium"

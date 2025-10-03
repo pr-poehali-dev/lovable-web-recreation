@@ -8,12 +8,8 @@ interface RDistributionWidgetProps {
 
 interface RBucket {
   range: string;
-  min: number;
-  max: number;
-  wins: number;
-  losses: number;
-  totalTrades: number;
-  winRate: number;
+  label: string;
+  count: number;
   totalR: number;
 }
 
@@ -21,75 +17,47 @@ export function RDistributionWidget({ executedTrades }: RDistributionWidgetProps
   const distributionData = useMemo(() => {
     if (executedTrades.length === 0) return [];
 
-    // Define R buckets
     const buckets: RBucket[] = [
-      { range: '-1.0R to -0.5R', min: -1.0, max: -0.5, wins: 0, losses: 0, totalTrades: 0, winRate: 0, totalR: 0 },
-      { range: '0.5R to 1.0R', min: 0.5, max: 1.0, wins: 0, losses: 0, totalTrades: 0, winRate: 0, totalR: 0 },
-      { range: '1.0R to 1.5R', min: 1.0, max: 1.5, wins: 0, losses: 0, totalTrades: 0, winRate: 0, totalR: 0 },
-      { range: '1.5R to 2.0R', min: 1.5, max: 2.0, wins: 0, losses: 0, totalTrades: 0, winRate: 0, totalR: 0 },
-      { range: '2.0R to 2.5R', min: 2.0, max: 2.5, wins: 0, losses: 0, totalTrades: 0, winRate: 0, totalR: 0 },
-      { range: '2.5R to 3.0R', min: 2.5, max: 3.0, wins: 0, losses: 0, totalTrades: 0, winRate: 0, totalR: 0 },
-      { range: '3.0R to 3.5R', min: 3.0, max: 3.5, wins: 0, losses: 0, totalTrades: 0, winRate: 0, totalR: 0 },
-      { range: '3.5R to 4.0R', min: 3.5, max: 4.0, wins: 0, losses: 0, totalTrades: 0, winRate: 0, totalR: 0 }
+      { range: '-2.0R', label: '-2.0R', count: 0, totalR: 0 },
+      { range: '-1.5R', label: '-1.5R', count: 0, totalR: 0 },
+      { range: '-1.0R', label: '-1.0R', count: 0, totalR: 0 },
+      { range: '-0.5R', label: '-0.5R', count: 0, totalR: 0 },
+      { range: '0R', label: '0R', count: 0, totalR: 0 },
+      { range: '0.5R', label: '0.5R', count: 0, totalR: 0 },
+      { range: '1.0R', label: '1.0R', count: 0, totalR: 0 },
+      { range: '1.5R', label: '1.5R', count: 0, totalR: 0 },
+      { range: '2.0R', label: '2.0R', count: 0, totalR: 0 },
+      { range: '2.5R', label: '2.5R', count: 0, totalR: 0 },
+      { range: '3.0R', label: '3.0R', count: 0, totalR: 0 },
+      { range: '3.5R+', label: '3.5R+', count: 0, totalR: 0 }
     ];
 
-    // Distribute trades into buckets
     executedTrades.forEach(trade => {
       const r = trade.actualR;
-      
-      // Find appropriate bucket
-      let bucket: RBucket | undefined;
-      
-      if (r < -0.5) {
-        bucket = buckets.find(b => b.min === -1.0);
-      } else {
-        bucket = buckets.find(b => r >= b.min && r < b.max);
-      }
-      
-      if (bucket) {
-        bucket.totalTrades++;
-        bucket.totalR += r;
-        if (r > 0) {
-          bucket.wins++;
-        } else {
-          bucket.losses++;
-        }
-      }
+      let bucketIndex;
+
+      if (r < -1.75) bucketIndex = 0;
+      else if (r < -1.25) bucketIndex = 1;
+      else if (r < -0.75) bucketIndex = 2;
+      else if (r < -0.25) bucketIndex = 3;
+      else if (r < 0.25) bucketIndex = 4;
+      else if (r < 0.75) bucketIndex = 5;
+      else if (r < 1.25) bucketIndex = 6;
+      else if (r < 1.75) bucketIndex = 7;
+      else if (r < 2.25) bucketIndex = 8;
+      else if (r < 2.75) bucketIndex = 9;
+      else if (r < 3.25) bucketIndex = 10;
+      else bucketIndex = 11;
+
+      buckets[bucketIndex].count++;
+      buckets[bucketIndex].totalR += r;
     });
 
-    // Calculate win rates
-    buckets.forEach(bucket => {
-      if (bucket.totalTrades > 0) {
-        bucket.winRate = (bucket.wins / bucket.totalTrades) * 100;
-      }
-    });
-
-    return buckets.filter(bucket => bucket.totalTrades > 0);
+    return buckets.filter(bucket => bucket.count > 0);
   }, [executedTrades]);
 
-  const stats = useMemo(() => {
-    if (executedTrades.length === 0) return null;
-    
-    const totalTrades = executedTrades.length;
-    const totalPnL = executedTrades.reduce((sum, t) => sum + t.actualR, 0);
-    const medianR = [...executedTrades].sort((a, b) => a.actualR - b.actualR)[Math.floor(totalTrades / 2)]?.actualR || 0;
-    
-    const profitableBuckets = distributionData.filter(b => b.range.includes('R to') && !b.range.includes('-')).length;
-    const bestRange = distributionData.reduce((best, current) => 
-      current.totalR > best.totalR ? current : best, 
-      distributionData[0] || { range: 'N/A', totalR: 0 }
-    );
-    
-    return {
-      totalTrades,
-      totalPnL,
-      medianR,
-      profitableBuckets,
-      bestPerformingRange: bestRange.range
-    };
-  }, [distributionData, executedTrades]);
-
-  const maxTrades = Math.max(...distributionData.map(d => d.totalTrades), 1);
+  const maxCount = Math.max(...distributionData.map(d => d.count), 1);
+  const totalTrades = executedTrades.length;
 
   if (executedTrades.length === 0) {
     return (
@@ -97,7 +65,7 @@ export function RDistributionWidget({ executedTrades }: RDistributionWidgetProps
         <CardHeader>
           <CardTitle>R-распределение</CardTitle>
           <p className="text-sm text-muted-foreground">
-            Разбивка результатов ваших сделок по диапазонам R-мультипликаторов
+            Распределение сделок по R-мультипликаторам
           </p>
         </CardHeader>
         <CardContent>
@@ -105,7 +73,7 @@ export function RDistributionWidget({ executedTrades }: RDistributionWidgetProps
             <div className="text-center text-muted-foreground">
               <div className="text-4xl mb-2">📊</div>
               <p>Гистограмма R-распределения</p>
-              <p className="text-xs">Добавьте сделки для анализа распределения</p>
+              <p className="text-xs">Добавьте сделки для анализа</p>
             </div>
           </div>
         </CardContent>
@@ -116,131 +84,73 @@ export function RDistributionWidget({ executedTrades }: RDistributionWidgetProps
   return (
     <Card className="bg-card/60 backdrop-blur border-border/50">
       <CardHeader>
-        <div className="flex justify-between items-start">
-          <div>
-            <CardTitle>R-распределение</CardTitle>
-            <p className="text-sm text-muted-foreground mt-1">
-              Разбивка результатов ваших сделок по диапазонам R-мультипликаторов
-            </p>
-          </div>
-          {stats && (
-            <div className="flex gap-6 text-sm">
-              <div className="text-center">
-                <span className="text-muted-foreground">Total Trades</span>
-                <div className="text-2xl font-bold">{stats.totalTrades}</div>
-              </div>
-              <div className="text-center">
-                <span className="text-muted-foreground">Total PnL</span>
-                <div className={`text-2xl font-bold ${stats.totalPnL >= 0 ? 'text-profit' : 'text-loss'}`}>
-                  {stats.totalPnL > 0 ? '+' : ''}{stats.totalPnL.toFixed(2)}R
-                </div>
-              </div>
-              <div className="text-center">
-                <span className="text-muted-foreground">Median R</span>
-                <div className={`text-2xl font-bold ${stats.medianR >= 0 ? 'text-profit' : 'text-loss'}`}>
-                  {stats.medianR > 0 ? '+' : ''}{stats.medianR.toFixed(2)}R
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
+        <CardTitle>R-распределение</CardTitle>
+        <p className="text-sm text-muted-foreground">
+          Распределение {totalTrades} сделок по R-мультипликаторам
+        </p>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {/* Legend */}
-          <div className="flex items-center gap-4 text-sm">
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-profit"></div>
-              <span>Wins</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-loss"></div>
-              <span>Losses</span>
-            </div>
-          </div>
+          <div className="h-80 relative flex flex-col">
+            <div className="flex-1 relative">
+              <div className="absolute left-0 top-0 bottom-0 flex flex-col justify-between text-xs text-muted-foreground pr-2">
+                <div>{maxCount}</div>
+                <div>{Math.floor(maxCount * 0.75)}</div>
+                <div>{Math.floor(maxCount * 0.5)}</div>
+                <div>{Math.floor(maxCount * 0.25)}</div>
+                <div>0</div>
+              </div>
 
-          {/* Chart */}
-          <div className="h-80 relative">
-            <div className="absolute inset-0 flex items-end justify-between gap-2">
-              {distributionData.map((bucket, index) => {
-                const height = (bucket.totalTrades / maxTrades) * 100;
-                const winHeight = (bucket.wins / maxTrades) * 100;
-                const lossHeight = (bucket.losses / maxTrades) * 100;
-                
-                return (
-                  <div key={bucket.range} className="flex-1 flex flex-col items-center group relative min-w-[60px]">
-                    {/* Bar */}
-                    <div className="w-full flex flex-col" style={{ height: `${height}%` }}>
-                      {/* Wins (green) */}
-                      {bucket.wins > 0 && (
-                        <div
-                          className="w-full bg-profit rounded-t"
-                          style={{ 
-                            height: `${(winHeight / height) * 100}%`,
-                            minHeight: bucket.wins > 0 ? '4px' : '0'
-                          }}
-                        />
-                      )}
-                      {/* Losses (red) */}
-                      {bucket.losses > 0 && (
-                        <div
-                          className="w-full bg-loss"
-                          style={{ 
-                            height: `${(lossHeight / height) * 100}%`,
-                            minHeight: bucket.losses > 0 ? '4px' : '0'
-                          }}
-                        />
-                      )}
-                    </div>
+              <div className="ml-10 h-full border-l border-b border-border/50">
+                <div className="h-full flex items-end justify-around gap-1 px-2">
+                  {distributionData.map((bucket) => {
+                    const height = (bucket.count / maxCount) * 100;
+                    const isNegative = parseFloat(bucket.range) < 0;
                     
-                    {/* Count label */}
-                    <div className="text-sm font-bold mt-2 text-white">
-                      {bucket.totalTrades}
-                    </div>
-                    
-                    {/* Tooltip */}
-                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 hidden group-hover:block z-10">
-                      <div className="bg-popover text-popover-foreground p-3 rounded-lg shadow-lg border text-xs min-w-[120px]">
-                        <div className="font-medium mb-1">{bucket.range}</div>
-                        <div className="space-y-1">
-                          <div>Всего: {bucket.totalTrades}</div>
-                          <div className="text-profit">Выигрыши: {bucket.wins}</div>
-                          <div className="text-loss">Проигрыши: {bucket.losses}</div>
-                          <div>Винрейт: {bucket.winRate.toFixed(1)}%</div>
-                          <div>Общий R: {bucket.totalR > 0 ? '+' : ''}{bucket.totalR.toFixed(2)}R</div>
+                    return (
+                      <div key={bucket.range} className="flex-1 flex flex-col items-center group relative max-w-[60px]">
+                        <div
+                          className={`w-full rounded-t transition-all ${
+                            isNegative ? 'bg-loss' : 'bg-profit'
+                          } hover:opacity-80`}
+                          style={{ height: `${height}%`, minHeight: '4px' }}
+                        />
+                        
+                        <div className="text-xs font-semibold mt-1 text-foreground">
+                          {bucket.count}
+                        </div>
+
+                        <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 hidden group-hover:block z-10">
+                          <div className="bg-popover text-popover-foreground p-3 rounded-lg shadow-lg border text-xs whitespace-nowrap">
+                            <div className="font-medium mb-1">{bucket.label}</div>
+                            <div>Сделок: {bucket.count}</div>
+                            <div className={bucket.totalR >= 0 ? 'text-profit' : 'text-loss'}>
+                              Общий R: {bucket.totalR > 0 ? '+' : ''}{bucket.totalR.toFixed(2)}R
+                            </div>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* X-axis labels */}
-          <div className="flex justify-between text-xs text-muted-foreground mt-4">
-            {distributionData.map(bucket => (
-              <div key={bucket.range} className="flex-1 text-center min-w-[60px]">
-                <div className="transform -rotate-45 text-xs">
-                  {bucket.range}
+                    );
+                  })}
                 </div>
               </div>
-            ))}
-          </div>
-          <div className="text-center text-sm font-semibold text-muted-foreground mt-2">
-            R Multiple Ranges
+            </div>
+
+            <div className="ml-10 flex justify-around gap-1 px-2 mt-2">
+              {distributionData.map(bucket => (
+                <div key={bucket.range} className="flex-1 text-center max-w-[60px]">
+                  <div className="text-xs text-muted-foreground">{bucket.label}</div>
+                </div>
+              ))}
+            </div>
           </div>
 
-          {stats && (
-            <div className="mt-4 text-sm">
-              <div className="text-muted-foreground">
-                Profitable ranges: {stats.profitableBuckets} of 8 ranges
-              </div>
-              <div className="text-muted-foreground">
-                Best performing range: {stats.bestPerformingRange}
-              </div>
+          <div className="text-center">
+            <div className="text-sm font-medium text-muted-foreground">R-мультипликатор</div>
+            <div className="text-xs text-muted-foreground mt-1">
+              По вертикальной оси: количество сделок
             </div>
-          )}
+          </div>
         </div>
       </CardContent>
     </Card>
