@@ -41,6 +41,11 @@ export function ExecutePlanDialog({
   const [actualR, setActualR] = useState<number | null>(null);
 
   React.useEffect(() => {
+    if (executionType === 'stop-loss') {
+      setActualR(-1);
+      return;
+    }
+    
     if (plan && actualExitPrice) {
       const exit = parseFloat(actualExitPrice);
       if (!isNaN(exit)) {
@@ -54,7 +59,7 @@ export function ExecutePlanDialog({
     } else {
       setActualR(null);
     }
-  }, [plan, actualExitPrice]);
+  }, [plan, actualExitPrice, executionType]);
 
   React.useEffect(() => {
     if (executionType === 'take-profit' && plan) {

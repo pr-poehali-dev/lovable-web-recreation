@@ -9,8 +9,8 @@ export const PSYCHOLOGY_TAG_DEFINITIONS: PsychologyTag[] = [
   {
     name: 'Perfect Execution',
     description: 'Качественное исполнение плана без нарушений (независимо от результата)',
-    color: 'orange',
-    category: 'neutral'
+    color: 'green',
+    category: 'good'
   },
   {
     name: 'Rule Break: Entry',
