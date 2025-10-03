@@ -157,15 +157,6 @@ function TradingJournalContent() {
 
           <TabsContent value="guide" className="mt-0">
             <Guide />
-                <a 
-                  href="/guide" 
-                  className="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-medium"
-                >
-                  <Icon name="ExternalLink" size={16} />
-                  Открыть руководство
-                </a>
-              </div>
-            </div>
           </TabsContent>
         </Tabs>
       </div>
